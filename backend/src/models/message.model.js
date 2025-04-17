@@ -16,6 +16,19 @@ const messageSchema = new mongoose.Schema(
     text: {
       type: String,
     },
+
+    publicKey:{
+      type: String,
+      required: true,
+    },
+    evolutionCount: {
+      type: Number,
+      required: true,
+    },
+    spaceMap: {
+      type: String,
+      required:true,
+    },
     image: {
       type: String,
     },

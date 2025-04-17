@@ -2,6 +2,8 @@ import {create} from "zustand"
 import { axiosInstance } from "../lib/axios"
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { CryptoUtils } from "../lib/encryption"; // adjust path if needed
+
 
 const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/"
 
@@ -40,6 +42,9 @@ export const useAuthStore = create((set,get)=> ({
           set({ authUser: res.data });
           toast.success("Account created successfully");
           get().connectSocket();
+          const user = res.data;
+          await CryptoUtils.ensureOwnKeyPair(user._id,);
+
         } catch (error) {
           toast.error(error.response.data.message);
         } finally {
@@ -62,12 +67,25 @@ export const useAuthStore = create((set,get)=> ({
         set({ isLoggingIn: true });
         try {
           const res = await axiosInstance.post("/auth/login", data);
+          const user = res.data._id;
           set({ authUser: res.data });
+          try {
+            console.log("Ensured keypair for:", user._id);  // Log the user ID
+            await CryptoUtils.ensureOwnKeyPair();
+        } catch (keyPairError) {
+            console.error("Error in ensureOwnKeyPair:", keyPairError);  // Log the error
+            toast.error("Failed to ensure keypair. Please try again.");
+            return;  // Stop the execution if keypair creation fails
+        }
+          // await CryptoUtils.ensureOwnKeyPair(user);
+          // console.log("Ensured keypair for:", user);
           toast.success("Logged in successfully");
     
           get().connectSocket();
+          
+
         } catch (error) {
-          toast.error(error.response.data.message);
+          toast.error(error.response?.data?.message);
         } finally {
           set({ isLoggingIn: false });
         }

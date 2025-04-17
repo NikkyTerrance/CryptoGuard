@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import {connectDB} from "./lib/db.js"
 import cookieParser from "cookie-parser"
 import messageRoutes from "./routes/message.route.js"
+import keyRoutes from "./routes/key.route.js"
 import cors from "cors"
 import { app, server } from "./lib/socket.js";
 import path from "path"
@@ -24,6 +25,7 @@ app.use(cors({
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use("/api/key", keyRoutes)
 
 if (process.env.NODE_ENV === "production") {
     app.use(express.static(path.join(__dirname, "../frontend/dist")));

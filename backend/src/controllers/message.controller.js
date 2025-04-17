@@ -38,21 +38,25 @@ export const getMessages = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { text, image } = req.body;
+    const { text, image, evolutionCount, publicKey, spaceMap } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
-
+    console.log(req.body);
     let imageUrl;
     if (image) {
       // Upload base64 image to cloudinary
       const uploadResponse = await cloudinary.uploader.upload(image);
       imageUrl = uploadResponse.secure_url;
     }
+    console.log("Space map:",  spaceMap,"ev count", evolutionCount)
 
     const newMessage = new Message({
       senderId,
       receiverId,
       text,
+      evolutionCount,
+      spaceMap,
+      publicKey,
       image: imageUrl,
     });
 

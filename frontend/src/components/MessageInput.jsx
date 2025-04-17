@@ -2,6 +2,10 @@ import { useRef, useState } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { Image, Send, X } from "lucide-react";
 import toast from "react-hot-toast";
+import { performFullEncryptionFlow } from "../lib/encryption"; // update path as needed
+import { useAuthStore } from "../store/useAuthStore";
+import { axiosInstance } from "../lib/axios";
+
 
 const MessageInput = () => {
   const [text, setText] = useState("");
@@ -28,25 +32,59 @@ const MessageInput = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  // const handleSendMessage = async (e) => {
+  //   e.preventDefault();
+  //   if (!text.trim() && !imagePreview) return;
+
+  //   try {
+  //     await sendMessage({
+  //       text: text.trim(),
+  //       image: imagePreview,
+  //     });
+
+  //     // Clear form
+  //     setText("");
+  //     setImagePreview(null);
+  //     if (fileInputRef.current) fileInputRef.current.value = "";
+  //   } catch (error) {
+  //     console.error("Failed to send message:", error);
+  //   }
+  // };
+  const { selectedUser } = useChatStore();
+  const { user } = useAuthStore();
+  
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!text.trim() && !imagePreview) return;
-
+  
     try {
+      const { encryptedText, encryptedSpaceMap, pubKey, evolutionCountNext } = await performFullEncryptionFlow(text, selectedUser._id);
+      console.log("space map", encryptedSpaceMap, "evo", evolutionCountNext)
+      // Send encrypted message and encrypted space map
       await sendMessage({
-        text: text.trim(),
+        encryptedText,
+        encryptedSpaceMap,
+        evolutionCountNext,
+        pubKey,
         image: imagePreview,
       });
-
+  
+      // Save new public key for sender (optional to do in background)
+      // await axiosInstance.post(`/api/save-new-keypair`, {
+      //   userId: user._id,
+      //   keyPair: newPublicKey,
+      // });
+  
       // Clear form
       setText("");
       setImagePreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.error("Failed to encrypt or send message:", error);
+      toast.error("Encryption failed");
     }
   };
-
+  
   return (
     <div className="p-4 w-full">
       {imagePreview && (
