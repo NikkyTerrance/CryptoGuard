@@ -24,14 +24,7 @@ export const useChatStore = create((set, get) => ({
 
   getMessages: async (userId) => {
     set({ isMessagesLoading: true });
-    // try {
-    //   const res = await axiosInstance.get(`/messages/${userId}`);
-    //   set({ messages: res.data });
-    // } catch (error) {
-    //   toast.error(error.response.data.message);
-    // } finally {
-    //   set({ isMessagesLoading: false });
-    // }
+   
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       
@@ -69,26 +62,65 @@ export const useChatStore = create((set, get) => ({
       set({ isMessagesLoading: false });
     }
   },
-  sendMessage: async (messageData) => {
-    const { selectedUser, messages } = get();
-    try {
-      const spaceMapStr = JSON.stringify(messageData.encryptedSpaceMap)
-      const messageToStore = JSON.stringify(messageData.encryptedText)
-      console.log("message data:", messageData);
-      console.log(messageToStore)
-      console.log("str space map", spaceMapStr)
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`,{ text: messageToStore, publicKey:messageData.pubKey, evolutionCount: messageData.evolutionCountNext, spaceMap: spaceMapStr});
-      console.log("res data :", res.data)
 
-      const justSent = res.data;
+  // sendMessage: async (messageData) => {
+  //   const { selectedUser, messages } = get();
+  //   try {
+  //     const spaceMapStr = JSON.stringify(messageData.encryptedSpaceMap)
+  //     const messageToStore = JSON.stringify(messageData.encryptedText)
+  //     console.log("message data:", messageData);
+  //     console.log(messageToStore)
+  //     console.log("str space map", spaceMapStr)
+  //     const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`,{ 
+  //       text: messageToStore, 
+  //       publicKey:messageData.pubKey, 
+  //       evolutionCount: messageData.evolutionCountNext, 
+  //       spaceMap: spaceMapStr});
+  //     console.log("res data :", res.data)
+
+  //     const justSent = res.data;
 
      
-      set({ messages: [...messages, res.data] });
+  //     set({ messages: [...messages, res.data] });
+  //   } catch (error) {
+  //     toast.error(error.response.data.message);
+  //   }
+  // },
+  sendMessage: async (messageData) => {
+    const { selectedUser } = get();
+    try {
+      const spaceMapStr = JSON.stringify(messageData.encryptedSpaceMap);
+      const messageToStore = JSON.stringify(messageData.encryptedText);
+  
+      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, { 
+        text: messageToStore, 
+        publicKey: messageData.pubKey, 
+        evolutionCount: messageData.evolutionCountNext, 
+        spaceMap: spaceMapStr 
+      });
+  
+      const justSent = res.data;
+  
+      // Make sure to parse the returned fields before decrypting
+      const decryptedText = await performFullDecryptionFlow({
+        encryptedText: JSON.parse(justSent.text),
+        encryptedSpaceMap: JSON.parse(justSent.spaceMap),
+        publicKey: JSON.parse(justSent.publicKey),
+        evolutionCount: justSent.evolutionCount,
+      });
+  
+      const messageWithDecryption = {
+        ...justSent,
+        decryptedText,
+      };
+  
+      set((state) => ({ messages: [...state.messages, messageWithDecryption] }));
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error?.response?.data?.message || "Failed to send message");
     }
   },
-
+  
+  
   subscribeToMessages: () => {
     const { selectedUser } = get();
     if (!selectedUser) return;

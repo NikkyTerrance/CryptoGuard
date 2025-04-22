@@ -69,11 +69,7 @@ const MessageInput = () => {
         image: imagePreview,
       });
   
-      // Save new public key for sender (optional to do in background)
-      // await axiosInstance.post(`/api/save-new-keypair`, {
-      //   userId: user._id,
-      //   keyPair: newPublicKey,
-      // });
+
   
       // Clear form
       setText("");

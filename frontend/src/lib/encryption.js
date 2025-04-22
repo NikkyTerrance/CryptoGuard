@@ -137,11 +137,6 @@ static async ensureOwnKeyPair() {
     return table;
   }
 
-  // static async postNewKeyPair(publicKey, privateKey) {
-  //   console.log(publicKey, privateKey);
-  //   await axiosInstance.put('key/user/keys', {publicKey, privateKey});
-  // }
-
   static encryptSpaceMap(map, xorKey) {
     return map.map(pos => pos ^ parseInt(xorKey.slice(0, 8), 2));
   }
@@ -181,10 +176,6 @@ export class LWECryptosystem {
     return { publicKey: this.B, secretKey: this.S };
   }
 
-  // decryptBlock(ciphertext, publicKey) {
-  //   const M = (ciphertext - publicKey) % this.q;
-  //   return M.toString(2).padStart(4, '0');
-  // }
   decryptBlock(ciphertext, publicKey) {
     console.log("cipher text", ciphertext)
     const M = ciphertext - publicKey[0]  % this.q;  // Adding this.q ensures positive result
@@ -213,24 +204,18 @@ export async function performFullEncryptionFlow(inputText, userId) {
    await CryptoUtils.postNewContact(userId,pubKey);
    console.log("hi")
   }
-
-  // if (pubKey !== contactKey.key) throw new Error('Key mismatch');
- const pubKeystr = JSON.parse(pubKey)
-console.log("pubkey for e xorkey is ", pubKeystr)
-  
+  const pubKeystr = JSON.parse(pubKey)
+  console.log("pubkey for e xorkey is ", pubKeystr)
   const evolvedHash = CryptoUtils.evolveKey(pubKeystr, contactKey.evolutioncount + 1);
   const xorKey = CryptoUtils.binaryFromHex(evolvedHash);
   console.log("XOR key is ", xorKey)
-
   const xored = CryptoUtils.xorBlocks(segmented, xorKey);
   console.log("xored is ", xored)
-
   const transposed = CryptoUtils.transposition(xored);
   console.log("transposed is",transposed)
   const table = CryptoUtils.generateSubstitutionTable();
   const substituted = CryptoUtils.substituteBlocks(transposed, table);
   console.log("substd",substituted);
-
   const lwe = new LWECryptosystem();
   const newKeyPair = lwe.keyGeneration();
   const publicKeyStr = JSON.stringify(newKeyPair.publicKey);
@@ -239,10 +224,8 @@ console.log("pubkey for e xorkey is ", pubKeystr)
   const pubKey1 = JSON.parse(pubKey);
   console.log("Substituted blocks:", substituted);
   console.log("PubKey for encryption:", pubKey);
-
   const encrypted = substituted.map(block => lwe.encryptBlock(block, pubKey1));
   const encryptedSpaceMap = CryptoUtils.encryptSpaceMap(spaceMap, xorKey);
-
   await CryptoUtils.postNewKeyPair({publicKey: publicKeyStr, privateKey: privateKeyStr});
   console.log("this is pub key: " ,pubKey)
   console.log(encrypted)
